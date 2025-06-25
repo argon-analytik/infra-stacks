@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2025.6.0
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /etc/cloudflared:/etc/cloudflared:ro
+    environment:
+      - ROLE=${ROLE:-PRIMARY}
+    command: >
+      /bin/sh -c 'if [ "$ROLE" = "PRIMARY" ]; then cloudflared tunnel run; else tail -f /dev/null; fi'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

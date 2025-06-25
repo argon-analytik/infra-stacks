@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  psso:
+    image: hello-world
+    restart: unless-stopped
+    environment:
+      - ROLE=${ROLE:-PRIMARY}
+    command: >
+      /bin/sh -c 'if [ "$ROLE" = "PRIMARY" ]; then echo running psso; else tail -f /dev/null; fi'
+    volumes:
+      - psso-data:/data
+    healthcheck:
+      test: ["CMD", "echo", "ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+volumes:
+  psso-data:
