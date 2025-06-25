@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  authentik:
+    image: ghcr.io/goauthentik/server:2025.6.0
+    restart: unless-stopped
+    environment:
+      - ROLE=${ROLE:-PRIMARY}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - DATABASE_URL=postgresql://authentik:${POSTGRES_PASSWORD}@db/authentik
+    volumes:
+      - authentik-data:/data
+    command: >
+      /bin/sh -c 'if [ "$ROLE" = "PRIMARY" ]; then /entrypoint.sh; else tail -f /dev/null; fi'
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=authentik
+    volumes:
+      - authentik-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+volumes:
+  authentik-data:
+  authentik-postgres-data:
